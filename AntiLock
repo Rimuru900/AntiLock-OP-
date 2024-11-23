@@ -2,7 +2,7 @@ local TweenService = game:GetService("TweenService")
 local antiLockEnabled = true  -- Whether anti-lock is active
 local skyPosition = Vector3.new(0, 500, 0)  -- Position that points to the sky (arbitrary high Y value)
 
--- Function to detect if someone is locking onto the player (excluding the executor)
+-- Function to detect if someone is locking onto the local player (excluding the executor)
 local function antiLock()
     local localPlayer = game.Players.LocalPlayer
     local character = localPlayer.Character
