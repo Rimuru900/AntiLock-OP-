@@ -1,3 +1,7 @@
+--[[ u nigga trying steal ma script nuh uh ]]--
+
+
+
 local TweenService = game:GetService("TweenService")
 local antiLockEnabled = true -- Whether anti-lock is active
 local skyPosition = Vector3.new(0, 10000, 0) -- Position to force the camera to look straight up
@@ -15,24 +19,26 @@ local function antiLock()
     for _, player in pairs(game.Players:GetPlayers()) do
         -- Exclude the local player from anti-lock checks
         if player ~= localPlayer and player.Character then
-            local camera = workspace.CurrentCamera
             local targetPart = player.Character:FindFirstChild("UpperTorso")
             local humanoid = player.Character:FindFirstChild("Humanoid")
             local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
 
             if targetPart and humanoid and rootPart then
                 -- Detect if the locking player is focusing on the local player
-                local distance = (camera.CFrame.Position - upperTorso.Position).Magnitude
+                local distance = (upperTorso.Position - targetPart.Position).Magnitude
                 local velocity = rootPart.Velocity.Magnitude
 
                 -- Check for lock-on or high-speed players
                 if distance < 200 or velocity > 50 then -- Adjust speed threshold as needed
                     -- Force the locking player's camera to look straight up
-                    local currentCFrame = workspace.CurrentCamera.CFrame
-                    local targetCFrame = CFrame.new(currentCFrame.Position, currentCFrame.Position + Vector3.new(0, 1, 0))
-                    local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-                    local tween = TweenService:Create(camera, tweenInfo, {CFrame = targetCFrame})
-                    tween:Play()
+                    local playerCamera = player:FindFirstChild("Camera") or player.Character:FindFirstChild("Camera")
+                    if playerCamera then
+                        local currentCFrame = playerCamera.CFrame
+                        local targetCFrame = CFrame.new(currentCFrame.Position, currentCFrame.Position + Vector3.new(0, 1, 0))
+                        local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+                        local tween = TweenService:Create(playerCamera, tweenInfo, {CFrame = targetCFrame})
+                        tween:Play()
+                    end
                 end
             end
         end
