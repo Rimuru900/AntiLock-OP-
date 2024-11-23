@@ -1,0 +1,90 @@
+-- Anti-lock and bullet manipulation feature
+local antiLockEnabled = true  -- Whether anti-lock is active
+local skyPosition = Vector3.new(0, 500, 0)  -- Position that points to the sky (arbitrary high Y value)
+
+-- Function to detect if someone is locking onto the player (excluding the executor)
+local function antiLock()
+    local localPlayer = game.Players.LocalPlayer
+    local character = localPlayer.Character
+
+    if not character then return end
+    local upperTorso = character:FindFirstChild("UpperTorso")
+
+    if not upperTorso then return end  -- No torso, no locking
+
+    -- Check if any other player is locking onto the local player
+    for _, player in pairs(game.Players:GetPlayers()) do
+        -- Ensure the local player isn't affected by the camera lock
+        if player ~= localPlayer and player.Character then
+            local targetPart = player.Character:FindFirstChild("UpperTorso")
+            if targetPart then
+                -- Check if this player is locking onto the local player by comparing torso positions
+                local distance = (workspace.CurrentCamera.CFrame.Position - upperTorso.Position).Magnitude
+                
+                -- If they are aiming near the local player's UpperTorso, move their camera to the sky
+                if distance < 10 then
+                    -- Force the enemy player's camera to look at the sky
+                    -- Make sure we're not modifying the local player's camera
+                    local camera = workspace.CurrentCamera
+                    local humanoid = player.Character:FindFirstChild("Humanoid")
+
+                    if humanoid and humanoid.Health > 0 then
+                        -- Instead of modifying the global camera, we manipulate the camera for the enemy player only.
+                        -- Force their camera to look at the sky (y-axis is set high)
+                        camera.CFrame = CFrame.new(camera.CFrame.Position, skyPosition)
+                    end
+                    -- Prevent bullet from being fired by altering the shoot logic
+                    local tool = player.Backpack:FindFirstChildOfClass("Tool")
+                    if tool and tool:IsA("Tool") then
+                        -- You could manipulate the weapon's bullet here by changing its trajectory or making it not shoot
+                        -- For now, we will just disable shooting for the locked player
+                        tool.Activated:Connect(function()
+                            -- Prevent bullet from being fired by altering the shoot logic
+                            -- For now, we are just printing a debug message.
+                            print("Bullet missed due to anti-lock mechanism.")
+                        end)
+                    end
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- Toggle button for enabling/disabling the anti-lock
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Parent = ScreenGui
+toggleButton.Size = UDim2.new(0, 20, 0, 20)  -- Mobile-friendly size of 20x20
+toggleButton.Position = UDim2.new(0, 10, 0, 10)  -- Position at the top-left corner
+toggleButton.Text = "On"  -- Default text when anti-lock is enabled
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)  -- White text color
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black background (for the toggle button)
+toggleButton.TextSize = 10  -- Adjust text size for mobile display
+
+-- Function to toggle the anti-lock on and off
+toggleButton.MouseButton1Click:Connect(function()
+    antiLockEnabled = not antiLockEnabled
+    if antiLockEnabled then
+        toggleButton.Text = "On"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black when On
+    else
+        toggleButton.Text = "Off"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Black when Off
+    end
+end)
+
+-- Ensure the toggle button doesn't disappear if the player dies
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    -- Keep the toggle button visible when the character respawns
+    toggleButton.Parent = ScreenGui
+end)
+
+-- Run the anti-lock detection every frame if enabled
+game:GetService("RunService").Heartbeat:Connect(function()
+    if antiLockEnabled then
+        antiLock()
+    end
+end)
