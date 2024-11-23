@@ -1,4 +1,4 @@
--- Anti-lock and bullet manipulation feature
+local TweenService = game:GetService("TweenService")
 local antiLockEnabled = true  -- Whether anti-lock is active
 local skyPosition = Vector3.new(0, 500, 0)  -- Position that points to the sky (arbitrary high Y value)
 
@@ -21,18 +21,21 @@ local function antiLock()
                 -- Check if this player is locking onto the local player by comparing torso positions
                 local distance = (workspace.CurrentCamera.CFrame.Position - upperTorso.Position).Magnitude
                 
-                -- If they are aiming near the local player's UpperTorso, move their camera to the sky
-                if distance < 10 then
-                    -- Force the enemy player's camera to look at the sky
-                    -- Make sure we're not modifying the local player's camera
+                -- Increased distance threshold for longer-range lock-on detection (200 units)
+                if distance < 200 then  -- Distance set to 200
+                    -- Force the enemy player's camera to look at the sky smoothly
                     local camera = workspace.CurrentCamera
                     local humanoid = player.Character:FindFirstChild("Humanoid")
 
                     if humanoid and humanoid.Health > 0 then
-                        -- Instead of modifying the global camera, we manipulate the camera for the enemy player only.
-                        -- Force their camera to look at the sky (y-axis is set high)
-                        camera.CFrame = CFrame.new(camera.CFrame.Position, skyPosition)
+                        -- Smoothly manipulate the enemy player's camera to look at the sky using TweenService
+                        local currentCFrame = camera.CFrame
+                        local targetCFrame = CFrame.new(currentCFrame.Position, skyPosition)
+                        local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)  -- Adjust duration for smoothness
+                        local tween = TweenService:Create(camera, tweenInfo, {CFrame = targetCFrame})
+                        tween:Play()
                     end
+
                     -- Prevent bullet from being fired by altering the shoot logic
                     local tool = player.Backpack:FindFirstChildOfClass("Tool")
                     if tool and tool:IsA("Tool") then
@@ -40,7 +43,6 @@ local function antiLock()
                         -- For now, we will just disable shooting for the locked player
                         tool.Activated:Connect(function()
                             -- Prevent bullet from being fired by altering the shoot logic
-                            -- For now, we are just printing a debug message.
                             print("Bullet missed due to anti-lock mechanism.")
                         end)
                     end
